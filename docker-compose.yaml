@@ -1,0 +1,57 @@
+version: '3.2'
+services:
+  zula-db:
+    image: postgres:12
+    volumes:
+      - ./zula-data/postgres:/var/lib/postgresql/data
+    env_file:
+     - .env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 20s
+      retries: 20
+
+  zula-db-migrations:
+    depends_on:
+      zula-db:
+        condition: service_healthy
+    build:
+      context: ./zula-db
+    env_file:
+     - .env
+    environment:
+      REPAIR: "true"
+    restart: on-failure
+    volumes:
+      - ./zula-db/scripts:/flyway/sql
+      - ./zula-db/docker/script.sh:/var/run/entrypoint.sh
+    links:
+      - zula-db:zula-db
+
+  zula-cache:
+    image: redis:6
+    volumes:
+      - ./zula-data/redis:/data
+
+  zula-backend:
+    image: directus/directus:v9.0.0-rc.61
+    env_file:
+     - .env
+    ports:
+      - 127.0.0.1:8055:8055
+    restart: on-failure
+    depends_on:
+      - zula-db
+      - zula-cache
+
+  zula-frontend:
+    build:
+      context: ./zula-frontend
+    env_file:
+     - .env
+    ports:
+     - 127.0.0.1:5000:5000
+    restart: on-failure
+    depends_on:
+      - zula-backend
