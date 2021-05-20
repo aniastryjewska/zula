@@ -98,7 +98,7 @@ const App: FunctionComponent<AppProps> = (props) => {
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
   const [currentTranslation, setCurrentTranslation] =
     useState<BookTranslation>();
-  const history = useHistory();
+  let history = useHistory();
   console.log(directus.users.me.read());
 
   const requireLogin = (to: any, from: any, next: any) => {
@@ -128,6 +128,10 @@ const App: FunctionComponent<AppProps> = (props) => {
           });
         });
       });
+    } else {
+      if (drawerOpen) {
+        setDrawerOpen(false)
+      }
     }
   }, [loggedIn]);
 
@@ -174,6 +178,7 @@ const App: FunctionComponent<AppProps> = (props) => {
           <GuardProvider guards={[requireLogin]}>
             <Switch>
               <GuardedRoute exact path="/read" meta={{ auth: true }}>
+                {loggedIn ? <div></div> : <Redirect to={{ pathname: "/"}}/>}
                 {currentTranslation === undefined ? (
                   <Redirect to={{ pathname: "/" }}></Redirect>
                 ) : (
