@@ -11,7 +11,8 @@ export const Landing: FunctionComponent<LandingProps> = (props) => {
   return (
     <div
       style={{
-        width: "80%",
+        width: "70%",
+        maxWidth: "750",
         textAlign: "center",
       }}
     >
