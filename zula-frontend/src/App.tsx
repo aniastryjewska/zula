@@ -4,9 +4,10 @@ import './App.css';
 import { Directus } from '@directus/sdk';
 import { BookTranslation, ZulaMap } from './model';
 import { Login } from './components/login.component';
-import { Button, Grid, SwipeableDrawer, IconButton } from '@material-ui/core';
+import { Button, Grid, SwipeableDrawer, IconButton, Typography } from '@material-ui/core';
 import MenuIcon from '@material-ui/icons/Menu';
 import Image from 'material-ui-image';
+import { Landing } from './components/landing.component';
 
 interface AppProps { }
 
@@ -96,7 +97,25 @@ const App: FunctionComponent<AppProps> = (props) => {
           <MenuIcon />
         </IconButton> :
         <div></div>
-        
+      }
+
+      {
+        loggedIn ? 
+        <SwipeableDrawer
+          anchor={"left"}
+          open={drawerOpen}
+          onClose={toggleDrawer(false, setDrawerOpen)}
+          onOpen={toggleDrawer(true, setDrawerOpen)}
+        >
+          <Button style={{
+            margin: 20
+          }} variant="contained" onClick={(event) => {
+            directus.auth.logout().then((v) => {
+              setLoggedIn(false)
+            })
+          }}>Log out</Button>
+        </SwipeableDrawer> :
+        <div></div>
       }
 
       <Grid
@@ -109,44 +128,7 @@ const App: FunctionComponent<AppProps> = (props) => {
           {
             loggedIn
               ?
-              <div>
-                <SwipeableDrawer
-                  anchor={"left"}
-                  open={drawerOpen}
-                  onClose={toggleDrawer(false, setDrawerOpen)}
-                  onOpen={toggleDrawer(true, setDrawerOpen)}
-                >
-                  <Button style={{
-                    margin: 20
-                  }} variant="contained" onClick={(event) => {
-                    directus.auth.logout().then((v) => {
-                      setLoggedIn(false)
-                    })
-                  }}>Log out</Button>
-                </SwipeableDrawer>
-              Welcome to Zula
-              <br></br>
-                {
-                  translations.map(translation => {
-                    return (
-                      <Fragment>
-                        {translation.title}
-                          {translation.config.map(link => {
-                            return (
-                              <div>
-                                <Image
-                                  src={link}
-                                  aspectRatio={(16/9)}
-                                  disableSpinner
-                                />
-                              </div>
-                            )
-                          })}
-                      </Fragment>
-                    )
-                  })
-                }
-              </div>
+              <Landing translations={translations}/>
               :
               <Login directus={directus} setDirectus={setDirectus} setLoggedIn={setLoggedIn} />
           }
