@@ -14,8 +14,16 @@ import {
 import MenuIcon from "@material-ui/icons/Menu";
 import Image from "material-ui-image";
 import { Landing } from "./components/landing.component";
-import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
-import { GuardProvider, GuardedRoute } from 'react-router-guards';
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route,
+  Link,
+  useHistory,
+  Redirect,
+} from "react-router-dom";
+import { GuardProvider, GuardedRoute } from "react-router-guards";
+import { Read } from "./components/read.component";
 
 interface AppProps {}
 
@@ -88,6 +96,9 @@ const App: FunctionComponent<AppProps> = (props) => {
   );
   const [translations, setTranslations] = useState<BookTranslation[]>([]);
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
+  const [currentTranslation, setCurrentTranslation] =
+    useState<BookTranslation>();
+  const history = useHistory();
   console.log(directus.users.me.read());
 
   const requireLogin = (to: any, from: any, next: any) => {
@@ -95,11 +106,11 @@ const App: FunctionComponent<AppProps> = (props) => {
       if (loggedIn) {
         next();
       }
-      next.redirect('/');
+      next.redirect("/");
     } else {
       next();
     }
-  }
+  };
 
   useEffect(() => {
     if (loggedIn) {
@@ -112,6 +123,7 @@ const App: FunctionComponent<AppProps> = (props) => {
                 tempTranslations.push(translation as BookTranslation);
               });
               setTranslations(tempTranslations);
+              setCurrentTranslation(tempTranslations[0]);
             });
           });
         });
@@ -132,20 +144,49 @@ const App: FunctionComponent<AppProps> = (props) => {
         <div></div>
       )}
 
-      <Router>
-        <GuardProvider guards={[requireLogin]}>
-          <Switch>
-            <GuardedRoute exact path="/read" meta={{ auth: true }}>Reading...</GuardedRoute>
-            <Route exact path="/">
-              <Grid
-                container
-                direction="column"
-                justify="center"
-                alignItems="center"
+      <Grid container direction="column" justify="center" alignItems="center">
+        <Router>
+            {loggedIn ? (
+            <SwipeableDrawer
+              anchor={"left"}
+              open={drawerOpen}
+              onClose={toggleDrawer(false, setDrawerOpen)}
+              onOpen={toggleDrawer(true, setDrawerOpen)}
+            >
+              <Button
+                style={{
+                  margin: 20,
+                }}
+                variant="contained"
+                onClick={(event) => {
+                  directus.auth.logout().then((v) => {
+                    setLoggedIn(false);
+                  });
+                }}
               >
+                Log out
+              </Button>
+              <Link to="/" onClick={() => {setDrawerOpen(false)}}>Landing</Link>
+            </SwipeableDrawer>
+          ) : (
+            <div></div>
+          )}
+          <GuardProvider guards={[requireLogin]}>
+            <Switch>
+              <GuardedRoute exact path="/read" meta={{ auth: true }}>
+                {currentTranslation === undefined ? (
+                  <Redirect to={{ pathname: "/" }}></Redirect>
+                ) : (
+                  <Read translation={currentTranslation} />
+                )}
+              </GuardedRoute>
+              <Route exact path="/">
                 <Fragment>
                   {loggedIn ? (
-                    <Landing translations={translations} />
+                    <Landing
+                      translations={translations}
+                      setCurrentTranslation={setCurrentTranslation}
+                    />
                   ) : (
                     <Login
                       directus={directus}
@@ -154,36 +195,12 @@ const App: FunctionComponent<AppProps> = (props) => {
                     />
                   )}
                 </Fragment>
-              </Grid>
-            </Route>
-          </Switch>
-        </GuardProvider>
-      </Router>
+              </Route>
+            </Switch>
+          </GuardProvider>
+        </Router>
+      </Grid>
 
-      {loggedIn ? (
-        <SwipeableDrawer
-          anchor={"left"}
-          open={drawerOpen}
-          onClose={toggleDrawer(false, setDrawerOpen)}
-          onOpen={toggleDrawer(true, setDrawerOpen)}
-        >
-          <Button
-            style={{
-              margin: 20,
-            }}
-            variant="contained"
-            onClick={(event) => {
-              directus.auth.logout().then((v) => {
-                setLoggedIn(false);
-              });
-            }}
-          >
-            Log out
-          </Button>
-        </SwipeableDrawer>
-      ) : (
-        <div></div>
-      )}
     </Fragment>
   );
 };
