@@ -35,7 +35,7 @@ services:
       - ./zula-data/redis:/data
 
   zula-backend:
-    image: directus/directus:v9.0.0-rc.61
+    image: directus/directus:v9.0.0-rc.69
     env_file:
      - .env
     ports:
