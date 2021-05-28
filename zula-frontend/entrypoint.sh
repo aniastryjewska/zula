@@ -20,4 +20,6 @@ get_var_or_file(){
   fi
 }
 
+ls
+
 npm run build
